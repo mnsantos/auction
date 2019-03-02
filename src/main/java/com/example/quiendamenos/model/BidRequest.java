@@ -1,15 +1,17 @@
 package com.example.quiendamenos.model;
 
+import java.math.BigDecimal;
+
 public class BidRequest {
     private User user;
-    private Double amount;
+    private BigDecimal amount;
     private Integer id;
 
-    public Double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

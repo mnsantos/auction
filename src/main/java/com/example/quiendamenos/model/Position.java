@@ -1,10 +1,12 @@
 package com.example.quiendamenos.model;
 
+import java.math.BigDecimal;
+
 public class Position {
     private User user;
-    private Double amount;
+    private BigDecimal amount;
 
-    public Position(User user, Double amount) {
+    public Position(User user, BigDecimal amount) {
         this.user = user;
         this.amount = amount;
     }
@@ -17,11 +19,11 @@ public class Position {
         this.user = user;
     }
 
-    public Double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 }

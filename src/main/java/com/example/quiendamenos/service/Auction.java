@@ -2,15 +2,18 @@ package com.example.quiendamenos.service;
 
 import com.example.quiendamenos.model.*;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Auction {
 
-    private SortedMap<Double, User> bidMap = new TreeMap<>();
-    private SortedMap<Double, List<User>> invalidBidMap = new TreeMap<>();
+    private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
+    private SortedMap<BigDecimal, User> bidMap = new TreeMap<>();
+    private SortedMap<BigDecimal, List<User>> invalidBidMap = new TreeMap<>();
     private Date timeLimit;
     private int id;
+    private BigDecimal bestAmount = ONE_CENT;
 
     public Auction(Date timeLimit, Integer id) {
         this.bidMap = new TreeMap<>();
@@ -23,8 +26,11 @@ public class Auction {
         }
     }
 
-    public synchronized BidResponse bid(Double amount, User user) {
+    public synchronized BidResponse bid(BigDecimal amount, User user) {
         checkIfAuctionIsRunning();
+        if (amount.equals(this.bestAmount)) {
+            this.bestAmount = this.bestAmount.add(ONE_CENT);
+        }
         if (invalidBidMap.containsKey(amount)) {
             invalidBidMap.get(amount).add(user);
             return new BidResponse(false, 0);
@@ -32,7 +38,10 @@ public class Auction {
         int bidMapPosition = 0;
         if (bidMap.containsKey(amount)) {
             User otherUser = bidMap.get(amount);
-            invalidBidMap.put(amount, Arrays.asList(otherUser, user));
+            List<User> userList = new ArrayList<>();
+            userList.add(otherUser);
+            userList.add(user);
+            invalidBidMap.put(amount, userList);
             bidMapPosition = getBidMapPosition(amount);
             bidMap.remove(amount);
             return new BidResponse(false, 0, bidMapPosition);
@@ -42,11 +51,11 @@ public class Auction {
         return new BidResponse(true, bidMapPosition);
     }
 
-    private int getBidMapPosition(Double amount) {
-        return bidMap.headMap(amount + 0.01).size();
+    private int getBidMapPosition(BigDecimal amount) {
+        return bidMap.headMap(amount.add(ONE_CENT)).size();
     }
 
-    public Double bestOccupiedPlace() {
+    public BigDecimal bestOccupiedAmount() {
         checkIfAuctionIsRunning();
         if (bidMap.isEmpty()) {
             return null;
@@ -54,29 +63,10 @@ public class Auction {
         return bidMap.firstKey();
     }
 
-    public Double bestEmptyPlace() {
-        checkIfAuctionIsRunning();
-        if (bidMap.isEmpty()) {
-            return 0.01;
-        }
-
-        Double minusBidMap = bidMap.firstKey();
-        if (!invalidBidMap.isEmpty()) {
-            Double minusInvalidBidMap = invalidBidMap.firstKey();
-
-            if (minusBidMap >= minusInvalidBidMap) {
-                SortedMap<Double, List<User>> subMap = invalidBidMap.headMap(minusBidMap);
-                Double best = subMap.lastKey() + 0.01;
-                if (!best.equals(minusBidMap)) {
-                    return best;
-                } else {
-                    return null;
-                }
-            }
-        }
-
-        if (minusBidMap != 0.01) {
-            return 0.01;
+    public BigDecimal bestEmptyAmount() {
+        BigDecimal bestOccupiedAmount = bestOccupiedAmount();
+        if (!bestAmount.equals(bestOccupiedAmount)) {
+            return bestAmount;
         } else {
             return null;
         }
@@ -91,10 +81,10 @@ public class Auction {
         auctionResult.setStats(this.stats());
         List<Cell> cells = new ArrayList<>();
 
-        Double minusBidMapOrZero = bidMap.isEmpty() ? 0.0 : bidMap.lastKey();
-        Double minusInvalidBidMapOrZero = invalidBidMap.isEmpty() ? 0.0 : invalidBidMap.lastKey();
-        Double max = Double.max(minusInvalidBidMapOrZero, minusBidMapOrZero);
-        for (Double i = 0.01; i <= max; i += 0.01) {
+        BigDecimal minusBidMapOrZero = bidMap.isEmpty() ? BigDecimal.ZERO : bidMap.lastKey();
+        BigDecimal minusInvalidBidMapOrZero = invalidBidMap.isEmpty() ? BigDecimal.ZERO : invalidBidMap.lastKey();
+        BigDecimal max = minusInvalidBidMapOrZero.max(minusBidMapOrZero);
+        for (BigDecimal i = ONE_CENT; i.compareTo(max) <= 0; i = i.add(ONE_CENT)) {
             Cell cell = new Cell();
             cell.setAmount(i);
             if (bidMap.containsKey(i)) {

@@ -3,11 +3,14 @@ package com.example.quiendamenos.service;
 import com.example.quiendamenos.model.*;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Service
 public class AuctionService {
 
+    private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
+    private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
     private SortedMap<Integer, Auction> auctionMap = new TreeMap<>();
 
     public int start(Date timeLimit) {
@@ -39,9 +42,9 @@ public class AuctionService {
         return auctionMap.get(id).auctionResult();
     }
 
-    public PremiumResponse bestPlaceOrOccupied(int id, Double range) {
+    public PremiumResponse bestOrOccupied(int id, BigDecimal range) {
         validateId(id);
-        Double bestEmptyPlace = auctionMap.get(id).bestEmptyPlace();
+        BigDecimal bestEmptyPlace = auctionMap.get(id).bestEmptyAmount();
         if (bestEmptyPlace != null) {
             return new PremiumResponse(null, buildRange(bestEmptyPlace, range));
         } else {
@@ -49,21 +52,23 @@ public class AuctionService {
         }
     }
 
-    public PremiumResponse bestOccupied(int id, Double range) {
+    public PremiumResponse bestOccupied(int id, BigDecimal range) {
         validateId(id);
-        Double bestOccupiedPlace = auctionMap.get(id).bestOccupiedPlace();
+        BigDecimal bestOccupiedPlace = auctionMap.get(id).bestOccupiedAmount();
         if (bestOccupiedPlace != null) {
             return new PremiumResponse(buildRange(bestOccupiedPlace, range), null);
         }
         return new PremiumResponse();
     }
 
-    private List<Double> buildRange(Double number, Double range) {
-        Double random = (double) new Random().nextInt((int) (range * 100)) / 100;
-        if (number - random <= 0.01) {
-            return Arrays.asList(0.01, range);
+    private List<BigDecimal> buildRange(BigDecimal number, BigDecimal range) {
+
+        BigDecimal random = new BigDecimal(new Random().nextInt(range.multiply(ONE_HUNDRED).intValue())).divide(ONE_HUNDRED);
+        BigDecimal numberMinusRandom = number.add(random.negate());
+        if (numberMinusRandom.compareTo(ONE_CENT) <= 0) {
+            return Arrays.asList(ONE_CENT, range);
         }
-        return Arrays.asList(number - random, number + range - random);
+        return Arrays.asList(numberMinusRandom, numberMinusRandom.add(range));
     }
 
     private void validateId(int id) {

@@ -1,22 +1,20 @@
 package com.example.quiendamenos.model;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class Cell {
 
-    public enum State {
-        FREE, TAKEN, INVALID;
-    }
-    private Double amount;
+    private BigDecimal amount;
     private List<User> users;
     private int userQuantity;
     private State state;
 
-    public Double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
@@ -42,5 +40,9 @@ public class Cell {
 
     public void setState(State state) {
         this.state = state;
+    }
+
+    public enum State {
+        FREE, TAKEN, INVALID;
     }
 }
