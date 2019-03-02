@@ -102,8 +102,9 @@ public class Auction {
                 cell.setUserQuantity(1);
                 cell.setState(Cell.State.TAKEN);
             } else if (invalidBidMap.containsKey(i)) {
-                cell.setUsers(invalidBidMap.get(i));
-                cell.setUserQuantity(1);
+                List<User> users = invalidBidMap.get(i);
+                cell.setUsers(users);
+                cell.setUserQuantity(users.size());
                 cell.setState(Cell.State.INVALID);
             } else {
                 cell.setState(Cell.State.FREE);
