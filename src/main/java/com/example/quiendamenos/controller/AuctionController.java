@@ -41,6 +41,12 @@ public class AuctionController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @GetMapping(value = "/erase")
+    public ResponseEntity<Object> erase(@RequestParam int id) {
+        this.auctionService.erase(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @GetMapping(value = "/extend")
     public ResponseEntity<Object> extend(@RequestParam int id, @RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm") Date newTimeLimit) {
         this.auctionService.extend(id, newTimeLimit);

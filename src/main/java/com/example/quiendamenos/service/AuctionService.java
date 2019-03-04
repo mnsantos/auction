@@ -5,26 +5,29 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AuctionService {
 
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
     private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
-    private SortedMap<Integer, Auction> auctionMap = new TreeMap<>();
+    private Map<Integer, Auction> auctionMap = new ConcurrentHashMap<>();
+    private Integer nextId = 1;
 
-    public int start(Date timeLimit, BigDecimal maxBid) {
-        Integer id = 1;
-        if (!auctionMap.isEmpty()) {
-            id = auctionMap.lastKey() + 1;
-        }
-        this.auctionMap.put(id, new Auction(id, timeLimit, maxBid));
-        return id;
+    public synchronized int start(Date timeLimit, BigDecimal maxBid) {
+        this.auctionMap.put(nextId, new Auction(nextId, timeLimit, maxBid));
+        return nextId++;
     }
 
     public void stop(int id) {
         validateId(id);
         this.auctionMap.get(id).setTimeLimit(new Date());
+    }
+
+    public void erase(int id) {
+        validateId(id);
+        this.auctionMap.remove(id);
     }
 
     public void extend(int id, Date newTimeLimit) {
