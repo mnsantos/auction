@@ -4,6 +4,7 @@ import com.example.quiendamenos.model.*;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
 public class Auction {
@@ -13,6 +14,7 @@ public class Auction {
     private SortedMap<BigDecimal, List<User>> invalidBidMap;
     private Set<BigDecimal> freeBidMap;
     private Date timeLimit;
+    private BigDecimal maxBid;
     private int id;
 
     public Auction(Integer id, Date timeLimit, BigDecimal maxBid) {
@@ -21,38 +23,52 @@ public class Auction {
         } else {
             throw new RuntimeException("Cannot start auction in the past");
         }
-        this.validBidMap = new TreeMap<>();
-        this.invalidBidMap = new TreeMap<>();
+        this.validBidMap = new ConcurrentSkipListMap<>();
+        this.invalidBidMap = new ConcurrentSkipListMap<>();
         this.id = id;
-        this.freeBidMap = new LinkedHashSet<>();
+        this.maxBid = maxBid;
+        this.freeBidMap = Collections.synchronizedSet(new LinkedHashSet<>());
         for (BigDecimal i = ONE_CENT; i.compareTo(maxBid) <= 0; i = i.add(ONE_CENT)) {
             freeBidMap.add(i);
         }
     }
 
-    public synchronized BidResponse bid(BigDecimal amount, User user) {
+    public BidResponse bid(BigDecimal amount, User user) {
         checkIfAuctionIsRunning();
-        if (freeBidMap.contains(amount)) {
-            freeBidMap.remove(amount);
+        validateAmount(amount);
+        int bidMapPosition;
+        synchronized (this) {
+            if (freeBidMap.contains(amount)) {
+                freeBidMap.remove(amount);
+                validBidMap.put(amount, user);
+                bidMapPosition = getBidMapPosition(amount);
+                return new BidResponse(true, bidMapPosition);
+            } else if (validBidMap.containsKey(amount)) {
+                User otherUser = validBidMap.get(amount);
+                List<User> userList = new ArrayList<>();
+                userList.add(otherUser);
+                userList.add(user);
+                invalidBidMap.put(amount, userList);
+                bidMapPosition = getBidMapPosition(amount);
+                validBidMap.remove(amount);
+                return new BidResponse(false, 0, bidMapPosition);
+            } else {
+                invalidBidMap.get(amount).add(user);
+                return new BidResponse(false, 0);
+            }
         }
-        if (invalidBidMap.containsKey(amount)) {
-            invalidBidMap.get(amount).add(user);
-            return new BidResponse(false, 0);
+    }
+
+    private void validateAmount(BigDecimal amount) {
+        if (amount.compareTo(ONE_CENT) < 0) {
+            throw new RuntimeException("bid must be greater than one cent");
         }
-        int bidMapPosition = 0;
-        if (validBidMap.containsKey(amount)) {
-            User otherUser = validBidMap.get(amount);
-            List<User> userList = new ArrayList<>();
-            userList.add(otherUser);
-            userList.add(user);
-            invalidBidMap.put(amount, userList);
-            bidMapPosition = getBidMapPosition(amount);
-            validBidMap.remove(amount);
-            return new BidResponse(false, 0, bidMapPosition);
+        if (amount.scale() != 2) {
+            throw new RuntimeException("Amount must have scale = 2");
         }
-        validBidMap.put(amount, user);
-        bidMapPosition = getBidMapPosition(amount);
-        return new BidResponse(true, bidMapPosition);
+        if (amount.compareTo(maxBid) > 0) {
+            throw new RuntimeException(String.format("Max bid is %s", maxBid));
+        }
     }
 
     private int getBidMapPosition(BigDecimal amount) {
@@ -61,15 +77,18 @@ public class Auction {
 
     public BigDecimal bestOccupiedAmount() {
         checkIfAuctionIsRunning();
-        if (validBidMap.isEmpty()) {
-            return null;
+        if (!validBidMap.isEmpty()) {
+            validBidMap.firstKey();
         }
-        return validBidMap.firstKey();
+        return null;
     }
 
     public BigDecimal bestEmptyAmount() {
         if (!freeBidMap.isEmpty()) {
-            BigDecimal bestFreeAmount = freeBidMap.iterator().next();
+            BigDecimal bestFreeAmount;
+            synchronized (this) {
+                bestFreeAmount = freeBidMap.iterator().next();
+            }
             BigDecimal bestOccupiedAmount = bestOccupiedAmount();
             if (bestOccupiedAmount == null || bestFreeAmount.compareTo(bestOccupiedAmount) < 0) {
                 return bestFreeAmount;
