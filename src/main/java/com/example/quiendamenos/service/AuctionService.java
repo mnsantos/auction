@@ -13,12 +13,12 @@ public class AuctionService {
     private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
     private SortedMap<Integer, Auction> auctionMap = new TreeMap<>();
 
-    public int start(Date timeLimit) {
+    public int start(Date timeLimit, BigDecimal maxBid) {
         Integer id = 1;
         if (!auctionMap.isEmpty()) {
             id = auctionMap.lastKey() + 1;
         }
-        this.auctionMap.put(id, new Auction(timeLimit, id));
+        this.auctionMap.put(id, new Auction(id, timeLimit, maxBid));
         return id;
     }
 
@@ -44,9 +44,9 @@ public class AuctionService {
 
     public PremiumResponse bestOrOccupied(int id, BigDecimal range) {
         validateId(id);
-        BigDecimal bestEmptyPlace = auctionMap.get(id).bestEmptyAmount();
-        if (bestEmptyPlace != null) {
-            return new PremiumResponse(null, buildRange(bestEmptyPlace, range));
+        BigDecimal bestEmptyAmount = auctionMap.get(id).bestEmptyAmount();
+        if (bestEmptyAmount != null) {
+            return new PremiumResponse(null, buildRange(bestEmptyAmount, range));
         } else {
             return bestOccupied(id, range);
         }
@@ -54,9 +54,9 @@ public class AuctionService {
 
     public PremiumResponse bestOccupied(int id, BigDecimal range) {
         validateId(id);
-        BigDecimal bestOccupiedPlace = auctionMap.get(id).bestOccupiedAmount();
-        if (bestOccupiedPlace != null) {
-            return new PremiumResponse(buildRange(bestOccupiedPlace, range), null);
+        BigDecimal bestOccupiedAmount = auctionMap.get(id).bestOccupiedAmount();
+        if (bestOccupiedAmount != null) {
+            return new PremiumResponse(buildRange(bestOccupiedAmount, range), null);
         }
         return new PremiumResponse();
     }

@@ -28,15 +28,15 @@ public class AuctionController {
     }
 
     @GetMapping(value = "/start")
-    public ResponseEntity<Map<String, Integer>> start(@RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm") Date timeLimit) {
+    public ResponseEntity<Map<String, Integer>> start(@RequestParam @DateTimeFormat(pattern = "dd/MM/yyyyHH:mm") Date timeLimit, BigDecimal maxBid) {
         Map<String, Integer> response = new HashMap<>();
-        int id = this.auctionService.start(timeLimit);
+        int id = this.auctionService.start(timeLimit, maxBid);
         response.put("id", id);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/finish")
-    public ResponseEntity<Object> finish(@RequestParam int id) {
+    @GetMapping(value = "/stop")
+    public ResponseEntity<Object> stop(@RequestParam int id) {
         this.auctionService.stop(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
