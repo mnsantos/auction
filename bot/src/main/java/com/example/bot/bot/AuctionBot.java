@@ -1,5 +1,7 @@
 package com.example.bot.bot;
 
-public interface AuctionBot {
+import java.util.Observer;
+
+public interface AuctionBot extends Observer {
     void run();
 }

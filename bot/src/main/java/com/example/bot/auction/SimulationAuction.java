@@ -37,20 +37,19 @@ public class SimulationAuction extends BaseAuction {
     }
 
     @Override
-    protected Set<Integer> getBidsMade() {
-        return null;
-    }
-
-    @Override
     public BidResponse makeBid(Integer cents) {
         User user = new User(userName);
         BidRequest bidRequest = new com.example.bot.auction.model.simulation.BidRequest(user, new BigDecimal(cents).divide(ONE_HUNDRED), Integer.valueOf(this.auctionId));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         HttpEntity<BidRequest> request = new HttpEntity<>(bidRequest, headers);
         com.example.bot.auction.model.simulation.BidResponse bidResponse = restTemplate.postForEntity(bidUrl, request, com.example.bot.auction.model.simulation.BidResponse.class).getBody();
-        return new BidResponse(bidResponse.isValid(), bidResponse.getPosition(), bidResponse.getPositionDisplaced());
+        return new BidResponse(cents, bidResponse.isValid(), bidResponse.getPosition(), bidResponse.getPositionDisplaced());
+    }
+
+    @Override
+    protected Set<BidResponse> getBidsMade() {
+        return null;
     }
 
     @Override

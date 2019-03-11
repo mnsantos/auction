@@ -14,7 +14,7 @@ public class QuienDaMenosAuction extends BaseAuction {
     }
 
     @Override
-    protected Set<Integer> getBidsMade() {
+    protected Set<BidResponse> getBidsMade() {
         return null;
     }
 

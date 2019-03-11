@@ -6,6 +6,7 @@ import com.example.bot.auction.model.PremiumResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 
 public interface Auction {
 
@@ -16,6 +17,10 @@ public interface Auction {
     Integer position();
 
     Set<Integer> bids();
+
+    SortedSet<Integer> validBids();
+
+    SortedSet<Integer> invalidBids();
 
     Integer creditsUsed();
 

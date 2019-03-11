@@ -1,6 +1,7 @@
 package com.example.bot.auction.model;
 
 public class BidResponse {
+    private int amount;
     private boolean valid;
     private int position;
     private int positionDisplaced;
@@ -8,10 +9,19 @@ public class BidResponse {
     public BidResponse() {
     }
 
-    public BidResponse(boolean valid, int position, int positionDisplaced) {
+    public BidResponse(int amount, boolean valid, int position, int positionDisplaced) {
+        this.amount = amount;
         this.valid = valid;
         this.position = position;
         this.positionDisplaced = positionDisplaced;
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public void setAmount(int amount) {
+        this.amount = amount;
     }
 
     public boolean isValid() {
