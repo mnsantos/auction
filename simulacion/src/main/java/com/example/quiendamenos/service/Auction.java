@@ -4,15 +4,17 @@ import com.example.quiendamenos.model.*;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
 public class Auction {
 
     private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
-    private SortedMap<BigDecimal, User> validBidMap;
-    private SortedMap<BigDecimal, List<User>> invalidBidMap;
-    private Set<BigDecimal> freeBidMap;
+    private SortedMap<BigDecimal, User> validBids;
+    private SortedMap<BigDecimal, List<User>> invalidBids;
+    private Set<BigDecimal> freeBids;
+    private Map<User, List<BigDecimal>> userBids;
     private Date timeLimit;
     private BigDecimal maxBid;
     private int id;
@@ -23,13 +25,14 @@ public class Auction {
         } else {
             throw new RuntimeException("Cannot start auction in the past");
         }
-        this.validBidMap = new ConcurrentSkipListMap<>();
-        this.invalidBidMap = new ConcurrentSkipListMap<>();
+        this.validBids = new ConcurrentSkipListMap<>();
+        this.invalidBids = new ConcurrentSkipListMap<>();
+        this.userBids = new ConcurrentHashMap<>();
         this.id = id;
         this.maxBid = maxBid;
-        this.freeBidMap = Collections.synchronizedSet(new LinkedHashSet<>());
+        this.freeBids = Collections.synchronizedSet(new LinkedHashSet<>());
         for (BigDecimal i = ONE_CENT; i.compareTo(maxBid) <= 0; i = i.add(ONE_CENT)) {
-            freeBidMap.add(i);
+            freeBids.add(i);
         }
     }
 
@@ -38,24 +41,36 @@ public class Auction {
         validateAmount(amount);
         int bidMapPosition;
         synchronized (this) {
-            if (freeBidMap.contains(amount)) {
-                freeBidMap.remove(amount);
-                validBidMap.put(amount, user);
-                bidMapPosition = getBidMapPosition(amount);
+            if (freeBids.contains(amount)) {
+                freeBids.remove(amount);
+                validBids.put(amount, user);
+                bidMapPosition = getBidPosition(amount);
+                addUserBid(user, amount);
                 return new BidResponse(true, bidMapPosition);
-            } else if (validBidMap.containsKey(amount)) {
-                User otherUser = validBidMap.get(amount);
+            } else if (validBids.containsKey(amount)) {
+                User otherUser = validBids.get(amount);
                 List<User> userList = new ArrayList<>();
                 userList.add(otherUser);
                 userList.add(user);
-                invalidBidMap.put(amount, userList);
-                bidMapPosition = getBidMapPosition(amount);
-                validBidMap.remove(amount);
-                return new BidResponse(false, 0, bidMapPosition);
+                invalidBids.put(amount, userList);
+                validBids.remove(amount);
+                addUserBid(user, amount);
+                return new BidResponse(false, null);
             } else {
-                invalidBidMap.get(amount).add(user);
-                return new BidResponse(false, 0);
+                invalidBids.get(amount).add(user);
+                addUserBid(user, amount);
+                return new BidResponse(false, null);
             }
+        }
+    }
+
+    private void addUserBid(User user, BigDecimal amount) {
+        if (userBids.containsKey(user)) {
+            userBids.get(user).add(amount);
+        } else {
+            List<BigDecimal> bids = new ArrayList<>();
+            bids.add(amount);
+            userBids.put(user, bids);
         }
     }
 
@@ -71,23 +86,23 @@ public class Auction {
         }
     }
 
-    private int getBidMapPosition(BigDecimal amount) {
-        return validBidMap.headMap(amount.add(ONE_CENT)).size();
+    private int getBidPosition(BigDecimal amount) {
+        return validBids.headMap(amount.add(ONE_CENT)).size();
     }
 
     public BigDecimal bestOccupiedAmount() {
         checkIfAuctionIsRunning();
-        if (!validBidMap.isEmpty()) {
-            validBidMap.firstKey();
+        if (!validBids.isEmpty()) {
+            validBids.firstKey();
         }
         return null;
     }
 
     public BigDecimal bestEmptyAmount() {
-        if (!freeBidMap.isEmpty()) {
+        if (!freeBids.isEmpty()) {
             BigDecimal bestFreeAmount;
             synchronized (this) {
-                bestFreeAmount = freeBidMap.iterator().next();
+                bestFreeAmount = freeBids.iterator().next();
             }
             BigDecimal bestOccupiedAmount = bestOccupiedAmount();
             if (bestOccupiedAmount == null || bestFreeAmount.compareTo(bestOccupiedAmount) < 0) {
@@ -98,7 +113,7 @@ public class Auction {
     }
 
     public List<Position> stats() {
-        return validBidMap.entrySet().stream().map(e -> new Position(e.getValue(), e.getKey())).collect(Collectors.toList());
+        return validBids.entrySet().stream().map(e -> new Position(e.getValue(), e.getKey())).collect(Collectors.toList());
     }
 
     public AuctionResult auctionResult() {
@@ -106,18 +121,18 @@ public class Auction {
         auctionResult.setStats(this.stats());
         List<Cell> cells = new ArrayList<>();
 
-        BigDecimal minusBidMapOrZero = validBidMap.isEmpty() ? BigDecimal.ZERO : validBidMap.lastKey();
-        BigDecimal minusInvalidBidMapOrZero = invalidBidMap.isEmpty() ? BigDecimal.ZERO : invalidBidMap.lastKey();
+        BigDecimal minusBidMapOrZero = validBids.isEmpty() ? BigDecimal.ZERO : validBids.lastKey();
+        BigDecimal minusInvalidBidMapOrZero = invalidBids.isEmpty() ? BigDecimal.ZERO : invalidBids.lastKey();
         BigDecimal max = minusInvalidBidMapOrZero.max(minusBidMapOrZero);
         for (BigDecimal i = ONE_CENT; i.compareTo(max) <= 0; i = i.add(ONE_CENT)) {
             Cell cell = new Cell();
             cell.setAmount(i);
-            if (validBidMap.containsKey(i)) {
-                cell.setUsers(Arrays.asList(validBidMap.get(i)));
+            if (validBids.containsKey(i)) {
+                cell.setUsers(Arrays.asList(validBids.get(i)));
                 cell.setUserQuantity(1);
                 cell.setState(Cell.State.TAKEN);
-            } else if (invalidBidMap.containsKey(i)) {
-                List<User> users = invalidBidMap.get(i);
+            } else if (invalidBids.containsKey(i)) {
+                List<User> users = invalidBids.get(i);
                 cell.setUsers(users);
                 cell.setUserQuantity(users.size());
                 cell.setState(Cell.State.INVALID);
@@ -136,6 +151,14 @@ public class Auction {
         }
     }
 
+    public Date getTimeLimit() {
+        return timeLimit;
+    }
+
+    public void setTimeLimit(Date timeLimit) {
+        this.timeLimit = timeLimit;
+    }
+
     public boolean isRunning() {
         return new Date().before(this.timeLimit);
     }
@@ -144,7 +167,16 @@ public class Auction {
         return id;
     }
 
-    public void setTimeLimit(Date timeLimit) {
-        this.timeLimit = timeLimit;
+    public List<BidResponse> getUserBids(User user) {
+        if (userBids.containsKey(user)) {
+            return userBids.get(user).stream().map(b -> {
+                if (validBids.containsKey(b)) {
+                    return new BidResponse(true, getBidPosition(b));
+                } else {
+                    return new BidResponse(false, null);
+                }
+            }).collect(Collectors.toList());
+        }
+        return new ArrayList<>();
     }
 }

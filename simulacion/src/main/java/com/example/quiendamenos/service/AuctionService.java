@@ -85,4 +85,13 @@ public class AuctionService {
         return auctionMap.get(request.getId()).bid(request.getAmount(), request.getUser());
     }
 
+    public List<BidResponse> bids(int id, User user) {
+        validateId(id);
+        return auctionMap.get(id).getUserBids(user);
+    }
+
+    public Date end(int id) {
+        validateId(id);
+        return auctionMap.get(id).getTimeLimit();
+    }
 }

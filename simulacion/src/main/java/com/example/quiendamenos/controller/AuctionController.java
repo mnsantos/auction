@@ -10,9 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RequestMapping("auctions")
 @RestController
@@ -27,12 +25,19 @@ public class AuctionController {
         return new ResponseEntity<>(auctionService.bid(request), HttpStatus.OK);
     }
 
+    @PostMapping(value = "/bids")
+    public ResponseEntity<List<BidResponse>> bids(@RequestBody BidsRequest bidsRequest) {
+        return new ResponseEntity<>(this.auctionService.bids(bidsRequest.getId(), bidsRequest.getUser()), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/end")
+    public ResponseEntity<EndResponse> end(@RequestParam int id) {
+        return new ResponseEntity<>(new EndResponse(this.auctionService.end(id)), HttpStatus.OK);
+    }
+
     @GetMapping(value = "/start")
-    public ResponseEntity<Map<String, Integer>> start(@RequestParam @DateTimeFormat(pattern = "dd/MM/yyyyHH:mm") Date timeLimit, BigDecimal maxBid) {
-        Map<String, Integer> response = new HashMap<>();
-        int id = this.auctionService.start(timeLimit, maxBid);
-        response.put("id", id);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<StartResponse> start(@RequestParam @DateTimeFormat(pattern = "dd/MM/yyyyHH:mm") Date timeLimit, BigDecimal maxBid) {
+        return new ResponseEntity<>(new StartResponse(this.auctionService.start(timeLimit, maxBid)), HttpStatus.OK);
     }
 
     @GetMapping(value = "/stop")

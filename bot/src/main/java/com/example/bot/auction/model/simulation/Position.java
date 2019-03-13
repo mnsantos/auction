@@ -6,6 +6,9 @@ public class Position {
     private User user;
     private BigDecimal amount;
 
+    public Position() {
+    }
+
     public Position(User user, BigDecimal amount) {
         this.user = user;
         this.amount = amount;

@@ -3,11 +3,12 @@ package com.example.bot.auction;
 import com.example.bot.auction.model.BidResponse;
 import com.example.bot.auction.model.PremiumResponse;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
-public abstract class BaseAuction extends Observable implements Auction {
+public abstract class SelfUpdateAuction extends Observable implements Auction {
 
     protected String auctionId;
     private Set<Integer> bids = Collections.synchronizedSet(new LinkedHashSet<>());
@@ -18,17 +19,17 @@ public abstract class BaseAuction extends Observable implements Auction {
     private Integer bestAvailableOrOccupiedCredits;
     private Integer creditsUsed;
     private Integer actualPosition;
+    private LocalDateTime endTime;
+    private List<String> stats;
 
     private TimerTask task;
     private Timer timer;
 
-    public BaseAuction(Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, String auctionId) {
+    public SelfUpdateAuction(Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, String auctionId) {
         this.bidCredits = bidCredits;
         this.bestOccupiedCredits = bestOccupiedCredits;
         this.bestAvailableOrOccupiedCredits = bestAvailableOrOccupiedCredits;
         this.auctionId = auctionId;
-        updateAuction(false);
-        this.creditsUsed = this.bids.size() * this.bidCredits;
         this.timer = new Timer();
         this.task = new TimerTask() {
             @Override
@@ -36,6 +37,11 @@ public abstract class BaseAuction extends Observable implements Auction {
                 updateAuction(true);
             }
         };
+    }
+
+    @Override
+    public void startListening() {
+        updateAuction(false);
         timer.schedule(task, 2000, 2000);
     }
 
@@ -44,7 +50,8 @@ public abstract class BaseAuction extends Observable implements Auction {
         Set<Integer> bids = bidsMade.stream().map(BidResponse::getAmount).collect(Collectors.toSet());
         TreeSet<Integer> validBids = bidsMade.stream().filter(BidResponse::isValid).map(BidResponse::getAmount).collect(Collectors.toCollection(TreeSet::new));
         TreeSet<Integer> invalidBids = bidsMade.stream().filter(b -> !b.isValid()).map(BidResponse::getAmount).collect(Collectors.toCollection(TreeSet::new));
-        Integer actualPosition = getActualPosition();
+        Integer actualPosition = bidsMade.stream().filter(BidResponse::isValid).map(BidResponse::getPosition).min(Comparator.comparing(Integer::valueOf)).orElse(10000000);
+        List<String> stats = this.getStats();
         if (informChanges && (!validBids.equals(this.validBids) || !actualPosition.equals(this.actualPosition))) {
             setChanged();
             notifyObservers();
@@ -53,9 +60,16 @@ public abstract class BaseAuction extends Observable implements Auction {
         this.bids = bids;
         this.validBids = validBids;
         this.validBids = invalidBids;
+        this.creditsUsed = this.bids.size() * this.bidCredits;
+        this.endTime = this.getEndTime();
+        this.stats = stats;
     }
 
     protected abstract Set<BidResponse> getBidsMade();
+
+    protected abstract LocalDateTime getEndTime();
+
+    protected abstract List<String> getStats();
 
     @Override
     public final synchronized BidResponse bid(Integer cents) {
@@ -115,6 +129,13 @@ public abstract class BaseAuction extends Observable implements Auction {
         return this.actualPosition;
     }
 
-    public abstract Integer getActualPosition();
+    @Override
+    public final LocalDateTime endTime() {
+        return this.endTime;
+    }
 
+    @Override
+    public final List<String> stats() {
+        return this.stats;
+    }
 }

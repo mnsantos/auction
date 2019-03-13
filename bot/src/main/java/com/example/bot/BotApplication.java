@@ -1,7 +1,6 @@
 package com.example.bot;
 
-import com.example.bot.auction.Auction;
-import com.example.bot.auction.BaseAuction;
+import com.example.bot.auction.SelfUpdateAuction;
 import com.example.bot.auction.SimulationAuction;
 import com.example.bot.bot.AuctionBot;
 import com.example.bot.bot.ReactiveBotImpl;
@@ -24,7 +23,8 @@ public class BotApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		BaseAuction auction = new SimulationAuction(2, 20, 30, "mnsantos", "http://localhost:8080", "1");
+		SelfUpdateAuction auction = new SimulationAuction(2, 20, 30, "mnsantos", "http://localhost:8080", "2");
+		auction.startListening();
 		AuctionBot bot = new ReactiveBotImpl(auction, 100, 2);
 		auction.addObserver(bot);
 		bot.run();

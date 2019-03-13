@@ -38,14 +38,14 @@ public class ReactiveBotImpl extends ReactiveBot {
         findValidOffer(bestCent);
     }
 
-    private int findValidOffer(int bestCent) {
+    private void findValidOffer(int bestCent) {
         int limit = 100;
         int jump = 1;
         int start = bestCent;
         while (true) {
             for (int i = start; i < limit + start; i += jump) {
                 if (!wasOffered(i) && offer(i).isValid()) {
-                    return i;
+                    return;
                 }
             }
             limit += 100;

@@ -10,6 +10,8 @@ import java.util.SortedSet;
 
 public interface Auction {
 
+    void startListening();
+
     BidResponse bid(Integer cents);
 
     List<String> stats();

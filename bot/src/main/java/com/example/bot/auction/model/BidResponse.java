@@ -4,16 +4,14 @@ public class BidResponse {
     private int amount;
     private boolean valid;
     private int position;
-    private int positionDisplaced;
 
     public BidResponse() {
     }
 
-    public BidResponse(int amount, boolean valid, int position, int positionDisplaced) {
+    public BidResponse(int amount, boolean valid, int position) {
         this.amount = amount;
         this.valid = valid;
         this.position = position;
-        this.positionDisplaced = positionDisplaced;
     }
 
     public int getAmount() {
@@ -40,11 +38,4 @@ public class BidResponse {
         this.position = position;
     }
 
-    public int getPositionDisplaced() {
-        return positionDisplaced;
-    }
-
-    public void setPositionDisplaced(int positionDisplaced) {
-        this.positionDisplaced = positionDisplaced;
-    }
 }

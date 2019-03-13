@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-public class QuienDaMenosAuction extends BaseAuction {
+public class QuienDaMenosAuction extends SelfUpdateAuction {
 
     public QuienDaMenosAuction(Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, String auctionId) {
         super(bidCredits, bestOccupiedCredits, bestAvailableOrOccupiedCredits, auctionId);
@@ -15,6 +15,16 @@ public class QuienDaMenosAuction extends BaseAuction {
 
     @Override
     protected Set<BidResponse> getBidsMade() {
+        return null;
+    }
+
+    @Override
+    protected LocalDateTime getEndTime() {
+        return null;
+    }
+
+    @Override
+    protected List<String> getStats() {
         return null;
     }
 
@@ -33,18 +43,4 @@ public class QuienDaMenosAuction extends BaseAuction {
         return null;
     }
 
-    @Override
-    public Integer getActualPosition() {
-        return null;
-    }
-
-    @Override
-    public List<String> stats() {
-        return null;
-    }
-
-    @Override
-    public LocalDateTime endTime() {
-        return null;
-    }
 }
