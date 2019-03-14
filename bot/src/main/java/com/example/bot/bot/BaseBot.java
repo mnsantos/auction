@@ -51,7 +51,7 @@ public abstract class BaseBot implements AuctionBot {
         return bidResponse;
     }
 
-    private void checkCredits() {
+    protected void checkCredits() {
         if (creditsToUse > auction.creditsUsed()) throw new RuntimeException("All credits have been used");
     }
 
