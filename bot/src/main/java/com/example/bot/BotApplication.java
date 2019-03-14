@@ -4,6 +4,7 @@ import com.example.bot.auction.Auction;
 import com.example.bot.auction.SelfUpdateAuction;
 import com.example.bot.auction.SimulationAuction;
 import com.example.bot.bot.AuctionBot;
+import com.example.bot.bot.SimpleBlockBot;
 import com.example.bot.bot.SimpleBot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,9 @@ public class BotApplication implements CommandLineRunner {
 		SelfUpdateAuction selfUpdateAuction = new SelfUpdateAuction(2, 20, 30, simulationAuction);
 		selfUpdateAuction.startListening();
 		AuctionBot bot = new SimpleBot(selfUpdateAuction, 100, 2);
-		bot.run();
+		//bot.run();
+
+		AuctionBot myBot = new SimpleBlockBot(selfUpdateAuction, 600, 1);
+		myBot.run();
 	}
 }
