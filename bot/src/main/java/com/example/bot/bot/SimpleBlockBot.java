@@ -26,7 +26,8 @@ public class SimpleBlockBot extends BaseBot {
     @Override
     public void executePlan() {
 
-        Integer bestCent = findPlaceToBet();
+        //Integer bestCent = findPlaceToBet();
+        Integer bestCent = 125;
 
         LOG.info("Starting to bet in {}", bestCent);
 
@@ -34,6 +35,7 @@ public class SimpleBlockBot extends BaseBot {
 
         while (LocalDateTime.now().isBefore(endTime.plusSeconds(SECONDS_MARGIN_UNTIL_END))) {
             //this check probably won't work because the credits are updated after the response, and we are doing requests in parallel
+            this.checkCredits(1);
             final Integer priceToBet = bestCent++;
             Runnable job = () -> offer(priceToBet);
             LOG.info("Creating Job to bet #{} with {}", counter++, priceToBet);
