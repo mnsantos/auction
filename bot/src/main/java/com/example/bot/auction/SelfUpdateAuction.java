@@ -6,6 +6,7 @@ import com.example.bot.auction.model.PremiumResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class SelfUpdateAuction extends Observable {
@@ -17,7 +18,7 @@ public class SelfUpdateAuction extends Observable {
     private Integer bidCredits;
     private Integer bestOccupiedCredits;
     private Integer bestAvailableOrOccupiedCredits;
-    private Integer creditsUsed;
+    private AtomicInteger creditsUsed = new AtomicInteger(0);
     private Integer actualPosition;
     private LocalDateTime endTime;
     private List<String> stats;
@@ -59,7 +60,7 @@ public class SelfUpdateAuction extends Observable {
         this.bids = bids;
         this.validBids = validBids;
         this.validBids = invalidBids;
-        this.creditsUsed = this.bids.size() * this.bidCredits;
+        this.creditsUsed.set(this.bids.size() * this.bidCredits);
         this.endTime = auction.endTime();
         this.stats = stats;
     }
@@ -72,7 +73,7 @@ public class SelfUpdateAuction extends Observable {
         } else {
             invalidBids.add(cents);
         }
-        creditsUsed += bidCredits;
+        creditsUsed.addAndGet(bidCredits);
         return bidResponse;
     }
 
@@ -90,17 +91,17 @@ public class SelfUpdateAuction extends Observable {
 
     public PremiumResponse bestOccupied() {
         PremiumResponse bestOccupied = auction.bestOccupied();
-        creditsUsed += bestOccupiedCredits;
+        creditsUsed.addAndGet(bestOccupiedCredits);
         return bestOccupied;
     }
 
     public final PremiumResponse bestAvailableOrOccupied() {
         PremiumResponse bestAvailableOrOccupied = auction.bestAvailableOrOccupied();
-        creditsUsed += bestAvailableOrOccupiedCredits;
+        creditsUsed.addAndGet(bestAvailableOrOccupiedCredits);
         return bestAvailableOrOccupied;
     }
 
-    public final Integer creditsUsed() {
+    public final AtomicInteger creditsUsed() {
         return creditsUsed;
     }
 
