@@ -42,7 +42,7 @@ public class SimulationAuction extends BaseAuction {
     @Override
     public BidResponse bid(Integer cents) {
         User user = new User(userName);
-        BidRequest bidRequest = new com.example.bot.auction.model.simulation.BidRequest(user, new BigDecimal(cents).divide(ONE_HUNDRED), Integer.valueOf(this.auctionId));
+        BidRequest bidRequest = new BidRequest(user, new BigDecimal(cents).divide(ONE_HUNDRED), Integer.valueOf(this.auctionId));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<BidRequest> request = new HttpEntity<>(bidRequest, headers);
@@ -58,7 +58,8 @@ public class SimulationAuction extends BaseAuction {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<BidsRequest> request = new HttpEntity<>(bidsRequest, headers);
-        return restTemplate.exchange(bidsUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Set<BidResponse>>() {}).getBody();
+        return restTemplate.exchange(bidsUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Set<BidResponse>>() {
+        }).getBody();
     }
 
     @Override
@@ -73,7 +74,8 @@ public class SimulationAuction extends BaseAuction {
 
     @Override
     public List<String> stats() {
-        List<Position> positions = restTemplate.exchange(statsUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Position>>() {}, auctionId).getBody();
+        List<Position> positions = restTemplate.exchange(statsUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Position>>() {
+        }, auctionId).getBody();
         return positions.stream().map(p -> p.getUser().getName()).collect(Collectors.toList());
     }
 
