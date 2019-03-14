@@ -12,7 +12,6 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseBot implements AuctionBot {
 
@@ -21,13 +20,13 @@ public abstract class BaseBot implements AuctionBot {
     protected SelfUpdateAuction auction;
     protected LocalDateTime timeToStart;
     protected LocalDateTime endTime;
-    protected Integer creditsToUse;
+    protected Integer creditsLimit;
     private TimerTask task;
     private Timer timer;
 
-    public BaseBot(SelfUpdateAuction auction, Integer creditsToUse, Integer minutesBeforeAuctionEndToStart) {
+    public BaseBot(SelfUpdateAuction auction, Integer creditsLimit, Integer minutesBeforeAuctionEndToStart) {
         this.auction = auction;
-        this.creditsToUse = creditsToUse;
+        this.creditsLimit = creditsLimit;
         this.endTime = auction.endTime();
         this.timeToStart = endTime.minusMinutes(minutesBeforeAuctionEndToStart);
         this.timer = new Timer();
@@ -45,19 +44,20 @@ public abstract class BaseBot implements AuctionBot {
     }
 
     public final BidResponse offer(int cents) {
-        checkCredits();
+        checkCredits(auction.bidCredits());
         LOG.info(String.format("Making bid %s", cents));
         BidResponse bidResponse = auction.bid(cents);
         LOG.info(String.format("Credits used: %s", auction.creditsUsed()));
         return bidResponse;
     }
 
-    protected void checkCredits() {
-        if (auction.creditsUsed().get() >= creditsToUse) throw new RuntimeException("All credits have been used");
+    protected void checkCredits(int creditsToBeUsed) {
+        if (auction.creditsUsed().get() >= creditsLimit + creditsToBeUsed)
+            throw new RuntimeException("All credits have been used");
     }
 
     public final PremiumResponse bestAvailableOrOccupied() {
-        checkCredits();
+        checkCredits(auction.bestAvailableOrOccupiedCredits());
         LOG.info("Asking for best available or occupied");
         PremiumResponse premiumResponse = auction.bestAvailableOrOccupied();
         LOG.info(String.format("Credits used: %s", auction.creditsUsed()));
@@ -66,7 +66,7 @@ public abstract class BaseBot implements AuctionBot {
     }
 
     public final PremiumResponse bestOccupied() {
-        checkCredits();
+        checkCredits(auction.bestOccupiedCredits());
         LOG.info("Asking for best occupied");
         PremiumResponse premiumResponse = auction.bestOccupied();
         LOG.info(String.format("Credits used: %s", auction.creditsUsed()));

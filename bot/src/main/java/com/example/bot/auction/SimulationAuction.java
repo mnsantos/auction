@@ -28,7 +28,8 @@ public class SimulationAuction extends BaseAuction {
     private final String userName;
     private final RestTemplate restTemplate;
 
-    public SimulationAuction(String userName, String host, String auctionId) {
+    public SimulationAuction(String auctionId, Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, String userName, String host) {
+        super(auctionId, bidCredits, bestOccupiedCredits, bestAvailableOrOccupiedCredits);
         this.userName = userName;
         this.restTemplate = new RestTemplate();
         this.bidUrl = host + "/auctions/bid";
@@ -36,7 +37,6 @@ public class SimulationAuction extends BaseAuction {
         this.premiumUrl = host + "/auctions/premium?id={id}&type={type}";
         this.statsUrl = host + "/auctions/stats?id={id}";
         this.endUrl = host + "/auctions/end?id={id}";
-        this.auctionId = auctionId;
     }
 
     @Override

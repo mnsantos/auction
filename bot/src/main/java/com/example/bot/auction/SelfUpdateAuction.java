@@ -15,9 +15,6 @@ public class SelfUpdateAuction extends Observable {
     private Set<Integer> bids = Collections.synchronizedSet(new LinkedHashSet<>());
     private SortedSet<Integer> validBids = new ConcurrentSkipListSet<>();
     private SortedSet<Integer> invalidBids = new ConcurrentSkipListSet<>();
-    private Integer bidCredits;
-    private Integer bestOccupiedCredits;
-    private Integer bestAvailableOrOccupiedCredits;
     private AtomicInteger creditsUsed = new AtomicInteger(0);
     private Integer actualPosition;
     private LocalDateTime endTime;
@@ -26,10 +23,7 @@ public class SelfUpdateAuction extends Observable {
     private TimerTask task;
     private Timer timer;
 
-    public SelfUpdateAuction(Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, Auction auction) {
-        this.bidCredits = bidCredits;
-        this.bestOccupiedCredits = bestOccupiedCredits;
-        this.bestAvailableOrOccupiedCredits = bestAvailableOrOccupiedCredits;
+    public SelfUpdateAuction(Auction auction) {
         this.timer = new Timer();
         this.auction = auction;
         this.task = new TimerTask() {
@@ -60,7 +54,7 @@ public class SelfUpdateAuction extends Observable {
         this.bids = bids;
         this.validBids = validBids;
         this.validBids = invalidBids;
-        this.creditsUsed.set(this.bids.size() * this.bidCredits);
+        this.creditsUsed.set(this.bids.size() * this.auction.bidCredits());
         this.endTime = auction.endTime();
         this.stats = stats;
     }
@@ -73,7 +67,7 @@ public class SelfUpdateAuction extends Observable {
         } else {
             invalidBids.add(cents);
         }
-        creditsUsed.addAndGet(bidCredits);
+        creditsUsed.addAndGet(this.auction.bidCredits());
         return bidResponse;
     }
 
@@ -91,13 +85,13 @@ public class SelfUpdateAuction extends Observable {
 
     public PremiumResponse bestOccupied() {
         PremiumResponse bestOccupied = auction.bestOccupied();
-        creditsUsed.addAndGet(bestOccupiedCredits);
+        creditsUsed.addAndGet(this.auction.bestOccupiedCredits());
         return bestOccupied;
     }
 
     public final PremiumResponse bestAvailableOrOccupied() {
         PremiumResponse bestAvailableOrOccupied = auction.bestAvailableOrOccupied();
-        creditsUsed.addAndGet(bestAvailableOrOccupiedCredits);
+        creditsUsed.addAndGet(this.auction.bestAvailableOrOccupiedCredits());
         return bestAvailableOrOccupied;
     }
 
@@ -115,5 +109,17 @@ public class SelfUpdateAuction extends Observable {
 
     public final List<String> stats() {
         return this.stats;
+    }
+
+    public Integer bidCredits() {
+        return this.auction.bidCredits();
+    }
+
+    public Integer bestOccupiedCredits() {
+        return this.auction.bestOccupiedCredits();
+    }
+
+    public Integer bestAvailableOrOccupiedCredits() {
+        return this.auction.bestAvailableOrOccupiedCredits();
     }
 }

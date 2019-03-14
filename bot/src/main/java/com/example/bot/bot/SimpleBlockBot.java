@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * @author Leandro Narosky
  */
-public class SimpleBlockBot extends BaseBot{
+public class SimpleBlockBot extends BaseBot {
 
     private final static Integer SECONDS_MARGIN_UNTIL_END = 3;
 
@@ -34,7 +34,6 @@ public class SimpleBlockBot extends BaseBot{
 
         while (LocalDateTime.now().isBefore(endTime.plusSeconds(SECONDS_MARGIN_UNTIL_END))) {
             //this check probably won't work because the credits are updated after the response, and we are doing requests in parallel
-            this.checkCredits();
             final Integer priceToBet = bestCent++;
             Runnable job = () -> offer(priceToBet);
             LOG.info("Creating Job to bet #{} with {}", counter++, priceToBet);

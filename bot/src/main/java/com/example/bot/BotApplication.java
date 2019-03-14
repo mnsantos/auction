@@ -25,11 +25,10 @@ public class BotApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		Auction simulationAuction = new SimulationAuction("mnsantos", "http://localhost:8080", "2");
-		SelfUpdateAuction selfUpdateAuction = new SelfUpdateAuction(2, 20, 30, simulationAuction);
+		Auction simulationAuction = new SimulationAuction("1", 1, 20, 30, "mnsantos", "http://localhost:8080");
+		SelfUpdateAuction selfUpdateAuction = new SelfUpdateAuction(simulationAuction);
 		selfUpdateAuction.startListening();
-		AuctionBot bot = new SimpleBot(selfUpdateAuction, 100, 2);
-		//bot.run();
+		//AuctionBot bot = new SimpleBot(selfUpdateAuction, 100, 2);
 
 		AuctionBot myBot = new SimpleBlockBot(selfUpdateAuction, 600, 1);
 		myBot.run();

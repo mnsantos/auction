@@ -21,4 +21,10 @@ public interface Auction {
 
     LocalDateTime endTime();
 
+    Integer bidCredits();
+
+    Integer bestOccupiedCredits();
+
+    Integer bestAvailableOrOccupiedCredits();
+
 }

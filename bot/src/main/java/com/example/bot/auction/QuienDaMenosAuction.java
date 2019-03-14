@@ -31,7 +31,8 @@ public class QuienDaMenosAuction extends BaseAuction implements Auction {
     private final String bearerAuth;
     private final RestTemplate restTemplate;
 
-    public QuienDaMenosAuction(String bearerAuth, String host, String auctionId) {
+    public QuienDaMenosAuction(String auctionId, Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, String bearerAuth, String host) {
+        super(auctionId, bidCredits, bestOccupiedCredits, bestAvailableOrOccupiedCredits);
         this.bearerAuth = bearerAuth;
         this.restTemplate = new RestTemplate();
         this.bidUrl = host + "/api/users/me/auctions/{auctionId}/bids";
@@ -39,7 +40,6 @@ public class QuienDaMenosAuction extends BaseAuction implements Auction {
         this.premiumUrl = host + "/api/users/me/auctions/{auctionId}/bids/premium?pre={type}";
         this.statsUrl = host + "/api/users/me/auctions/{auctionId}/bids/graltable";
         this.endUrl = host + "/api/auctions/{auctionId}/uptime";
-        this.auctionId = auctionId;
     }
 
     @Override
