@@ -12,6 +12,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseBot implements AuctionBot {
 
@@ -52,7 +53,7 @@ public abstract class BaseBot implements AuctionBot {
     }
 
     protected void checkCredits() {
-        if (creditsToUse > auction.creditsUsed()) throw new RuntimeException("All credits have been used");
+        if (auction.creditsUsed().get() >= creditsToUse) throw new RuntimeException("All credits have been used");
     }
 
     public final PremiumResponse bestAvailableOrOccupied() {
