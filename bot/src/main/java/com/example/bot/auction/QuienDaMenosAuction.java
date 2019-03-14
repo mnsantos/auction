@@ -86,9 +86,10 @@ public class QuienDaMenosAuction extends BaseAuction implements Auction {
     public PremiumResponse bestAvailableOrOccupied() {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(this.bearerAuth);
-        //restTemplate.exchange(premiumUrl, HttpMethod.GET, new HttpEntity<>(null, headers), new ParameterizedTypeReference<>(){}, 2).getBody();
-        //TODO: complete this
-        return null;
+        com.example.bot.auction.model.quiendamenos.PremiumResponse response = restTemplate.exchange(premiumUrl, HttpMethod.GET, new HttpEntity<>(null, headers), new ParameterizedTypeReference<com.example.bot.auction.model.quiendamenos.PremiumResponse>() {
+        }, auctionId, 4).getBody();
+
+        return new PremiumResponse(response.getCentToBet());
     }
 
     @Override

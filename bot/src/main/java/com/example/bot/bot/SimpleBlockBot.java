@@ -48,8 +48,7 @@ public class SimpleBlockBot extends BaseBot {
     }
 
     private Integer findPlaceToBet() {
-        PremiumResponse premiumResponse = this.bestAvailableOrOccupied();
-        return premiumResponse.getBestRange() != null ? premiumResponse.getBestRange().get(0) : premiumResponse.getBestOccupiedRange().get(0);
+        return this.bestAvailableOrOccupied().getCentToBet();
     }
 
 }

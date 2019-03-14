@@ -5,8 +5,21 @@ import java.util.List;
 public class PremiumResponse {
     private List<Integer> bestOccupiedRange;
     private List<Integer> bestRange;
+    private Integer centToBet;
 
     public PremiumResponse() {
+    }
+
+    public PremiumResponse(Integer centToBet) {
+        this.centToBet = centToBet;
+    }
+
+    public Integer getCentToBet() {
+        return centToBet;
+    }
+
+    public void setCentToBet(Integer centToBet) {
+        this.centToBet = centToBet;
     }
 
     public PremiumResponse(List<Integer> bestOccupiedRange, List<Integer> bestRange) {
