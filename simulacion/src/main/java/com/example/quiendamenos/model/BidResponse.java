@@ -2,7 +2,7 @@ package com.example.quiendamenos.model;
 
 public class BidResponse {
     private boolean valid;
-    private int position;
+    private Integer position;
 
     public BidResponse(boolean valid, Integer position) {
         this.valid = valid;
