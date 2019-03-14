@@ -1,12 +1,13 @@
 package com.example.bot.bot;
 
-import com.example.bot.auction.Auction;
+import com.example.bot.auction.SelfUpdateAuction;
 
 import java.util.Observable;
+import java.util.Observer;
 
-public abstract class ReactiveBot extends BaseBot implements AuctionBot {
+public abstract class ReactiveBot extends BaseBot implements AuctionBot, Observer {
 
-    public ReactiveBot(Auction auction, Integer creditsToUse, Integer minutesBeforeAuctionEndToStart) {
+    public ReactiveBot(SelfUpdateAuction auction, Integer creditsToUse, Integer minutesBeforeAuctionEndToStart) {
         super(auction, creditsToUse, minutesBeforeAuctionEndToStart);
     }
 

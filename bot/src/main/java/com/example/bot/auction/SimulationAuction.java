@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SimulationAuction extends SelfUpdateAuction {
+public class SimulationAuction extends BaseAuction {
 
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
     private final String bidUrl;
@@ -28,8 +28,7 @@ public class SimulationAuction extends SelfUpdateAuction {
     private final String userName;
     private final RestTemplate restTemplate;
 
-    public SimulationAuction(Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, String userName, String host, String auctionId) {
-        super(bidCredits, bestOccupiedCredits, bestAvailableOrOccupiedCredits, auctionId);
+    public SimulationAuction(String userName, String host, String auctionId) {
         this.userName = userName;
         this.restTemplate = new RestTemplate();
         this.bidUrl = host + "/auctions/bid";
@@ -37,10 +36,11 @@ public class SimulationAuction extends SelfUpdateAuction {
         this.premiumUrl = host + "/auctions/premium?id={id}&type={type}";
         this.statsUrl = host + "/auctions/stats?id={id}";
         this.endUrl = host + "/auctions/end?id={id}";
+        this.auctionId = auctionId;
     }
 
     @Override
-    public BidResponse makeBid(Integer cents) {
+    public BidResponse bid(Integer cents) {
         User user = new User(userName);
         BidRequest bidRequest = new com.example.bot.auction.model.simulation.BidRequest(user, new BigDecimal(cents).divide(ONE_HUNDRED), Integer.valueOf(this.auctionId));
         HttpHeaders headers = new HttpHeaders();
@@ -52,7 +52,7 @@ public class SimulationAuction extends SelfUpdateAuction {
     }
 
     @Override
-    protected Set<BidResponse> getBidsMade() {
+    public Set<BidResponse> bids() {
         User user = new User(userName);
         BidsRequest bidsRequest = new BidsRequest(user, Integer.valueOf(auctionId));
         HttpHeaders headers = new HttpHeaders();
@@ -62,23 +62,23 @@ public class SimulationAuction extends SelfUpdateAuction {
     }
 
     @Override
-    public PremiumResponse getBestOccupied() {
+    public PremiumResponse bestOccupied() {
         return getPremiumResponse(restTemplate.getForEntity(premiumUrl, com.example.bot.auction.model.simulation.PremiumResponse.class, this.auctionId, "2").getBody());
     }
 
     @Override
-    public PremiumResponse getBestAvailableOrOccupied() {
+    public PremiumResponse bestAvailableOrOccupied() {
         return getPremiumResponse(restTemplate.getForEntity(premiumUrl, com.example.bot.auction.model.simulation.PremiumResponse.class, this.auctionId, "4").getBody());
     }
 
     @Override
-    public List<String> getStats() {
+    public List<String> stats() {
         List<Position> positions = restTemplate.exchange(statsUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Position>>() {}, auctionId).getBody();
         return positions.stream().map(p -> p.getUser().getName()).collect(Collectors.toList());
     }
 
     @Override
-    public LocalDateTime getEndTime() {
+    public LocalDateTime endTime() {
         return restTemplate.getForEntity(endUrl, EndResponse.class, auctionId).getBody().getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 

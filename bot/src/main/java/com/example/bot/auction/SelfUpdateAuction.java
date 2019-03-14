@@ -8,9 +8,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
-public abstract class SelfUpdateAuction extends Observable implements Auction {
+public class SelfUpdateAuction extends Observable {
 
-    protected String auctionId;
+    private Auction auction;
     private Set<Integer> bids = Collections.synchronizedSet(new LinkedHashSet<>());
     private SortedSet<Integer> validBids = new ConcurrentSkipListSet<>();
     private SortedSet<Integer> invalidBids = new ConcurrentSkipListSet<>();
@@ -25,12 +25,12 @@ public abstract class SelfUpdateAuction extends Observable implements Auction {
     private TimerTask task;
     private Timer timer;
 
-    public SelfUpdateAuction(Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, String auctionId) {
+    public SelfUpdateAuction(Integer bidCredits, Integer bestOccupiedCredits, Integer bestAvailableOrOccupiedCredits, Auction auction) {
         this.bidCredits = bidCredits;
         this.bestOccupiedCredits = bestOccupiedCredits;
         this.bestAvailableOrOccupiedCredits = bestAvailableOrOccupiedCredits;
-        this.auctionId = auctionId;
         this.timer = new Timer();
+        this.auction = auction;
         this.task = new TimerTask() {
             @Override
             public void run() {
@@ -39,19 +39,18 @@ public abstract class SelfUpdateAuction extends Observable implements Auction {
         };
     }
 
-    @Override
     public void startListening() {
         updateAuction(false);
         timer.schedule(task, 2000, 2000);
     }
 
     private void updateAuction(boolean informChanges) {
-        Set<BidResponse> bidsMade = getBidsMade();
+        Set<BidResponse> bidsMade = auction.bids();
         Set<Integer> bids = bidsMade.stream().map(BidResponse::getAmount).collect(Collectors.toSet());
         TreeSet<Integer> validBids = bidsMade.stream().filter(BidResponse::isValid).map(BidResponse::getAmount).collect(Collectors.toCollection(TreeSet::new));
         TreeSet<Integer> invalidBids = bidsMade.stream().filter(b -> !b.isValid()).map(BidResponse::getAmount).collect(Collectors.toCollection(TreeSet::new));
         Integer actualPosition = bidsMade.stream().filter(BidResponse::isValid).map(BidResponse::getPosition).min(Comparator.comparing(Integer::valueOf)).orElse(10000000);
-        List<String> stats = this.getStats();
+        List<String> stats = auction.stats();
         if (informChanges && (!validBids.equals(this.validBids) || !actualPosition.equals(this.actualPosition))) {
             setChanged();
             notifyObservers();
@@ -61,19 +60,12 @@ public abstract class SelfUpdateAuction extends Observable implements Auction {
         this.validBids = validBids;
         this.validBids = invalidBids;
         this.creditsUsed = this.bids.size() * this.bidCredits;
-        this.endTime = this.getEndTime();
+        this.endTime = auction.endTime();
         this.stats = stats;
     }
 
-    protected abstract Set<BidResponse> getBidsMade();
-
-    protected abstract LocalDateTime getEndTime();
-
-    protected abstract List<String> getStats();
-
-    @Override
-    public final synchronized BidResponse bid(Integer cents) {
-        BidResponse bidResponse = makeBid(cents);
+    public synchronized BidResponse bid(Integer cents) {
+        BidResponse bidResponse = auction.bid(cents);
         bids.add(cents);
         if (bidResponse.isValid()) {
             validBids.add(cents);
@@ -84,57 +76,42 @@ public abstract class SelfUpdateAuction extends Observable implements Auction {
         return bidResponse;
     }
 
-    public abstract BidResponse makeBid(Integer cents);
-
-    @Override
-    public final Set<Integer> bids() {
+    public Set<Integer> bids() {
         return this.bids;
     }
 
-    @Override
-    public final SortedSet<Integer> validBids() {
+    public SortedSet<Integer> validBids() {
         return validBids;
     }
 
-    @Override
-    public final SortedSet<Integer> invalidBids() {
+    public SortedSet<Integer> invalidBids() {
         return invalidBids;
     }
 
-    @Override
-    public final PremiumResponse bestOccupied() {
-        PremiumResponse bestOccupied = getBestOccupied();
+    public PremiumResponse bestOccupied() {
+        PremiumResponse bestOccupied = auction.bestOccupied();
         creditsUsed += bestOccupiedCredits;
         return bestOccupied;
     }
 
-    public abstract PremiumResponse getBestOccupied();
-
-    @Override
     public final PremiumResponse bestAvailableOrOccupied() {
-        PremiumResponse bestAvailableOrOccupied = getBestAvailableOrOccupied();
+        PremiumResponse bestAvailableOrOccupied = auction.bestAvailableOrOccupied();
         creditsUsed += bestAvailableOrOccupiedCredits;
         return bestAvailableOrOccupied;
     }
 
-    public abstract PremiumResponse getBestAvailableOrOccupied();
-
-    @Override
     public final Integer creditsUsed() {
         return creditsUsed;
     }
 
-    @Override
     public final Integer position() {
         return this.actualPosition;
     }
 
-    @Override
     public final LocalDateTime endTime() {
         return this.endTime;
     }
 
-    @Override
     public final List<String> stats() {
         return this.stats;
     }

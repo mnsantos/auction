@@ -1,7 +1,7 @@
 package com.example.bot.bot;
 
 import com.example.bot.BotApplication;
-import com.example.bot.auction.Auction;
+import com.example.bot.auction.SelfUpdateAuction;
 import com.example.bot.auction.model.BidResponse;
 import com.example.bot.auction.model.PremiumResponse;
 import org.slf4j.Logger;
@@ -17,14 +17,14 @@ public abstract class BaseBot implements AuctionBot {
 
     private static Logger LOG = LoggerFactory
             .getLogger(BotApplication.class);
-    protected Auction auction;
+    protected SelfUpdateAuction auction;
     protected LocalDateTime timeToStart;
     protected LocalDateTime endTime;
     protected Integer creditsToUse;
     private TimerTask task;
     private Timer timer;
 
-    public BaseBot(Auction auction, Integer creditsToUse, Integer minutesBeforeAuctionEndToStart) {
+    public BaseBot(SelfUpdateAuction auction, Integer creditsToUse, Integer minutesBeforeAuctionEndToStart) {
         this.auction = auction;
         this.creditsToUse = creditsToUse;
         this.endTime = auction.endTime();
