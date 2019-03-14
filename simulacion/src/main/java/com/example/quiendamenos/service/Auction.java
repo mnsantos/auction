@@ -5,6 +5,7 @@ import com.example.quiendamenos.model.*;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
@@ -12,9 +13,9 @@ public class Auction {
 
     private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
     private SortedMap<BigDecimal, User> validBids;
-    private SortedMap<BigDecimal, List<User>> invalidBids;
+    private SortedMap<BigDecimal, Queue<User>> invalidBids;
     private Set<BigDecimal> freeBids;
-    private Map<User, List<BigDecimal>> userBids;
+    private Map<User, Queue<BigDecimal>> userBids;
     private Date timeLimit;
     private BigDecimal maxBid;
     private int id;
@@ -49,7 +50,7 @@ public class Auction {
                 return new BidResponse(true, bidMapPosition);
             } else if (validBids.containsKey(amount)) {
                 User otherUser = validBids.get(amount);
-                List<User> userList = new ArrayList<>();
+                Queue<User> userList = new ConcurrentLinkedQueue<>();
                 userList.add(otherUser);
                 userList.add(user);
                 invalidBids.put(amount, userList);
@@ -68,7 +69,7 @@ public class Auction {
         if (userBids.containsKey(user)) {
             userBids.get(user).add(amount);
         } else {
-            List<BigDecimal> bids = new ArrayList<>();
+            Queue<BigDecimal> bids = new ConcurrentLinkedQueue<>();
             bids.add(amount);
             userBids.put(user, bids);
         }
@@ -132,8 +133,8 @@ public class Auction {
                 cell.setUserQuantity(1);
                 cell.setState(Cell.State.TAKEN);
             } else if (invalidBids.containsKey(i)) {
-                List<User> users = invalidBids.get(i);
-                cell.setUsers(users);
+                Queue<User> users = invalidBids.get(i);
+                cell.setUsers(new ArrayList<>(users));
                 cell.setUserQuantity(users.size());
                 cell.setState(Cell.State.INVALID);
             } else {

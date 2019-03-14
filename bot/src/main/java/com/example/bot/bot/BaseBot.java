@@ -44,7 +44,7 @@ public abstract class BaseBot implements AuctionBot {
     }
 
     public final BidResponse offer(int cents) {
-        checkCredits(auction.bidCredits());
+        //checkCredits(auction.bidCredits());
         LOG.info(String.format("Making bid %s", cents));
         BidResponse bidResponse = auction.bid(cents);
         LOG.info(String.format("Credits used: %s", auction.creditsUsed()));
@@ -57,7 +57,7 @@ public abstract class BaseBot implements AuctionBot {
     }
 
     public final PremiumResponse bestAvailableOrOccupied() {
-        checkCredits(auction.bestAvailableOrOccupiedCredits());
+        //checkCredits(auction.bestAvailableOrOccupiedCredits());
         LOG.info("Asking for best available or occupied");
         PremiumResponse premiumResponse = auction.bestAvailableOrOccupied();
         LOG.info(String.format("Credits used: %s", auction.creditsUsed()));
