@@ -26,9 +26,8 @@ public class SimpleBlockBot extends BaseBot {
     @Override
     public void executePlan() {
 
-        //Integer bestCent = findPlaceToBet();
-        Integer bestCent = 125;
-
+        Integer bestCent = findPlaceToBet();
+        //Integer bestCent = 360;
         LOG.info("Starting to bet in {}", bestCent);
 
         int counter = 0;
