@@ -48,6 +48,10 @@ public abstract class BaseBot implements AuctionBot {
         LOG.info(String.format("Making bid %s", cents));
         BidResponse bidResponse = auction.bid(cents);
         LOG.info(String.format("Credits used: %s", auction.creditsUsed()));
+        if(bidResponse.getPosition()==0){
+            LOG.info("Bet of {} didn't got any position",cents);
+        }
+        LOG.info("Bet of {} achieved positon {}", cents, bidResponse.getPosition());
         return bidResponse;
     }
 

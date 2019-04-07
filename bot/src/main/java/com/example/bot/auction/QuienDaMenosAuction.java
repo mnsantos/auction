@@ -2,10 +2,7 @@ package com.example.bot.auction;
 
 import com.example.bot.auction.model.BidResponse;
 import com.example.bot.auction.model.PremiumResponse;
-import com.example.bot.auction.model.quiendamenos.Bid;
-import com.example.bot.auction.model.quiendamenos.BidRequest;
-import com.example.bot.auction.model.quiendamenos.EndResponse;
-import com.example.bot.auction.model.quiendamenos.Position;
+import com.example.bot.auction.model.quiendamenos.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +13,8 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -46,12 +45,13 @@ public class QuienDaMenosAuction extends BaseAuction implements Auction {
     public BidResponse bid(Integer cents) {
         BidRequest bidRequest = new BidRequest(new BigDecimal(cents).divide(ONE_HUNDRED));
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(this.bearerAuth);
         HttpEntity<BidRequest> request = new HttpEntity<>(bidRequest, headers);
-        com.example.bot.auction.model.quiendamenos.BidResponse bidResponse = restTemplate.postForEntity(bidUrl, request, com.example.bot.auction.model.quiendamenos.BidResponse.class).getBody();
-        //TODO: check if it is valid
-        return null;
+        List<com.example.bot.auction.model.quiendamenos.BidResponse> bidResponse = restTemplate.exchange(bidUrl, HttpMethod.POST, request, new ParameterizedTypeReference<List<com.example.bot.auction.model.quiendamenos.BidResponse>>() {}, auctionId).getBody();
+        BidResponse response = new BidResponse();
+        response.setPosition(bidResponse.get(0).getPos());
+        return response;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class QuienDaMenosAuction extends BaseAuction implements Auction {
         headers.setBearerAuth(this.bearerAuth);
         HttpEntity<Object> request = new HttpEntity<>(null, headers);
         List<Bid> bids = restTemplate.exchange(bidsUrl, HttpMethod.GET, request, new ParameterizedTypeReference<List<Bid>>() {
-        }).getBody();
+        }, auctionId).getBody();
         return bids.stream().map(b -> new BidResponse(getCents(b.getAmount()), b.getUnique() == 1, b.getPos())).collect(Collectors.toSet());
     }
 
@@ -86,14 +86,19 @@ public class QuienDaMenosAuction extends BaseAuction implements Auction {
     public PremiumResponse bestAvailableOrOccupied() {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(this.bearerAuth);
-        //restTemplate.exchange(premiumUrl, HttpMethod.GET, new HttpEntity<>(null, headers), new ParameterizedTypeReference<>(){}, 2).getBody();
-        //TODO: complete this
-        return null;
+        com.example.bot.auction.model.quiendamenos.PremiumResponse response = restTemplate.exchange(premiumUrl, HttpMethod.GET, new HttpEntity<>(null, headers), new ParameterizedTypeReference<com.example.bot.auction.model.quiendamenos.PremiumResponse>() {
+        }, auctionId, 4).getBody();
+
+        return new PremiumResponse(response.getCentToBet());
     }
 
     @Override
     public LocalDateTime endTime() {
-        return restTemplate.getForEntity(endUrl, EndResponse.class, auctionId).getBody().getEndTimes().get(0).getDateTimeEnd().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        List<EndTime> response = restTemplate.exchange(endUrl, HttpMethod.GET, new HttpEntity<>(null, new HttpHeaders()), new ParameterizedTypeReference<List<EndTime>>() {
+        }, auctionId).getBody();
+        EndResponse endResponse = new EndResponse();
+        endResponse.setEndTimes(response);
+        return endResponse.getEndTimes().get(0).getDateTimeEnd().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
     }
 

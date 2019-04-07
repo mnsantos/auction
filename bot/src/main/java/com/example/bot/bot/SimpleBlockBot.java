@@ -27,13 +27,14 @@ public class SimpleBlockBot extends BaseBot {
     public void executePlan() {
 
         Integer bestCent = findPlaceToBet();
-
+        //Integer bestCent = 360;
         LOG.info("Starting to bet in {}", bestCent);
 
         int counter = 0;
 
         while (LocalDateTime.now().isBefore(endTime.plusSeconds(SECONDS_MARGIN_UNTIL_END))) {
             //this check probably won't work because the credits are updated after the response, and we are doing requests in parallel
+            this.checkCredits(1);
             final Integer priceToBet = bestCent++;
             Runnable job = () -> offer(priceToBet);
             LOG.info("Creating Job to bet #{} with {}", counter++, priceToBet);
@@ -48,8 +49,7 @@ public class SimpleBlockBot extends BaseBot {
     }
 
     private Integer findPlaceToBet() {
-        PremiumResponse premiumResponse = this.bestAvailableOrOccupied();
-        return premiumResponse.getBestRange() != null ? premiumResponse.getBestRange().get(0) : premiumResponse.getBestOccupiedRange().get(0);
+        return this.bestAvailableOrOccupied().getCentToBet();
     }
 
 }
